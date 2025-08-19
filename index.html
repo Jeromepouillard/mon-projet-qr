@@ -25,9 +25,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-        h1 {
-            color: #333;
-        }
+        h1 { color: #333; }
         input#inputText {
             width: 80%;
             padding: 10px;
@@ -36,18 +34,14 @@
             border-radius: 4px;
             font-size: 16px;
         }
-        input#logoFile {
-            margin-bottom: 10px;
-        }
+        input#logoFile { margin-bottom: 10px; }
         .option-logo {
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 10px;
         }
-        .option-logo input {
-            margin-right: 5px;
-        }
+        .option-logo input { margin-right: 5px; }
         button {
             background-color: #007BFF;
             color: white;
@@ -59,22 +53,17 @@
             transition: background-color 0.3s ease;
             margin: 5px;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
+        button:hover { background-color: #0056b3; }
         #qrcode-container {
             margin-top: 20px;
             padding: 10px;
             border: 2px solid #eee;
             display: inline-block;
         }
-        #qrcode-canvas {
-            display: block;
-        }
+        #qrcode-canvas { display: block; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <h1>Générateur de QR Code avec Logo</h1>
 
@@ -90,9 +79,9 @@
         <button onclick="generateQRCodeWithLogo()">Générer le QR Code</button>
         <button onclick="printPage()">Imprimer</button>
         <button onclick="downloadPDF()">Télécharger en PDF</button>
+        <button onclick="printWithTitle()">Imprimer avec Titre</button>
 
-        <div id="qrcode-container">
-            </div>
+        <div id="qrcode-container"></div>
     </div>
 
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
@@ -110,9 +99,9 @@
                 alert("Veuillez entrer du texte ou une URL.");
                 return;
             }
-            
+
             qrcodeContainer.innerHTML = '';
-            
+
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = qrSize;
             tempCanvas.height = qrSize;
@@ -126,7 +115,7 @@
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
-            
+
             setTimeout(() => {
                 const qrImg = qrcodeContainer.querySelector('img');
                 if (qrImg) {
@@ -141,7 +130,7 @@
                                 const x = (qrSize - logoSize) / 2;
                                 const y = (qrSize - logoSize) / 2;
                                 tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
-                                
+
                                 qrcodeContainer.innerHTML = '';
                                 qrcodeContainer.appendChild(tempCanvas);
                             };
@@ -150,7 +139,7 @@
                         reader.readAsDataURL(logoFile);
                     } else {
                         qrcodeContainer.innerHTML = '';
-                        qrcodeContainer.appendChild(qrImg);
+                        qrcodeContainer.appendChild(tempCanvas);
                     }
                 }
             }, 100);
@@ -177,8 +166,51 @@
                 pdf.save("qrcode.pdf");
             });
         }
-    </script>
 
+        // 👉 Nouvelle fonction pour imprimer avec un titre
+       function printWithTitle() {
+            const qrcodeContainer = document.getElementById("qrcode-container");
+            if (qrcodeContainer.innerHTML.trim() === "") {
+                alert("Veuillez d'abord générer un QR Code.");
+                return;
+            }
+        
+            const titre = prompt("Texte à afficher au-dessus du QR :", "Mon QR Code");
+            if (titre === null) return;
+        
+            const dataUrl = qrcodeContainer.querySelector("canvas")
+                ? qrcodeContainer.querySelector("canvas").toDataURL("image/png")
+                : qrcodeContainer.querySelector("img").src;
+        
+            const w = window.open("", "_blank");
+            w.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Impression QR</title>
+                    <style>
+                        @page { margin:0; }
+                        body { margin:0; font-family:sans-serif; text-align:center; }
+                        h1 { margin-top:20mm; font-size:28px; }
+                        .qr { display:flex; justify-content:center; align-items:center; margin-top:30mm; }
+                        img { width:150mm; height:150mm; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${titre}</h1>
+                    <div class="qr"><img src="${dataUrl}" /></div>
+                    <script>window.onload=()=>{setTimeout(()=>window.print(),200)};<\/script>
+                </body>
+                </html>
+            `);
+            w.document.close();
+        }
+
+    </script>
 </body>
+</html>
+
 
 </html>
+
