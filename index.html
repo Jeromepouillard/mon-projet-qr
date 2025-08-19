@@ -30,18 +30,12 @@
     button:hover{background:#0056b3}
     #qrcode-container{margin-top:20px;padding:10px;border:2px solid #eee;display:inline-block;background:#fff}
     #qrcode-canvas{display:block}
-
-    /* --- Mise en page impression dédiée (dans la fenêtre d’impression) --- */
-    @media print {
-      /* rien ici, la page d’impression a ses propres styles injectés */
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Générateur de QR Code avec Logo</h1>
 
-    <!-- Contenu du QR -->
     <input type="text" id="inputText" placeholder="Entrez votre texte ou URL ici" />
     <div class="option-logo">
       <input type="checkbox" id="addLogo" />
@@ -49,7 +43,6 @@
     </div>
     <input type="file" id="logoFile" accept="image/*" />
 
-    <!-- Titre pour l'impression -->
     <div class="row" style="margin-top:10px">
       <input type="text" id="printTitle" placeholder="Titre à imprimer au-dessus du QR (max 60 caractères)" maxlength="60" />
     </div>
@@ -65,13 +58,11 @@
     <div id="qrcode-container"></div>
   </div>
 
-  <!-- Librairies (comme avant) -->
   <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
   <script>
-    // Compteur de caractères
     const printTitleEl = document.getElementById("printTitle");
     const titleCountEl = document.getElementById("titleCount");
     printTitleEl.addEventListener("input", () => {
@@ -92,13 +83,11 @@
 
       qrcodeContainer.innerHTML = "";
 
-      // Canvas de travail
       const tempCanvas = document.createElement("canvas");
       tempCanvas.width = qrSize;
       tempCanvas.height = qrSize;
       const tempContext = tempCanvas.getContext("2d");
 
-      // Génère le QR dans un conteneur temporaire (lib qrcodejs génère <img>)
       const qrDiv = document.createElement("div");
       const qrcode = new QRCode(qrDiv, {
         text,
@@ -109,7 +98,6 @@
         correctLevel: QRCode.CorrectLevel.H
       });
 
-      // On attend un tick pour que l'image soit dispo
       setTimeout(() => {
         const qrImg = qrDiv.querySelector("img");
         if (qrImg) {
@@ -124,7 +112,6 @@
                 const x = (qrSize - logoSize) / 2;
                 const y = (qrSize - logoSize) / 2;
                 tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
-
                 qrcodeContainer.appendChild(tempCanvas);
               };
               logoImg.src = event.target.result;
@@ -147,19 +134,18 @@
         alert("Veuillez d'abord générer un QR Code.");
         return;
       }
-      const node = qrcodeContainer.firstChild; // canvas
+      const node = qrcodeContainer.firstChild;
       html2canvas(node).then(canvas => {
         const imgData = canvas.toDataURL("image/png");
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF();
-        const imgWidth = 60; // mm
+        const imgWidth = 60;
         const imgHeight = canvas.height * imgWidth / canvas.width;
         pdf.addImage(imgData, "PNG", 75, 20, imgWidth, imgHeight);
         pdf.save("qrcode.pdf");
       });
     }
 
-    // Impression calibrée A4 avec un QR exactement 150mm x 150mm + titre
     function printWithTitle() {
       const qrcodeContainer = document.getElementById("qrcode-container");
       if (qrcodeContainer.innerHTML.trim() === "") {
@@ -173,7 +159,6 @@
         return;
       }
 
-      // Récupère l'image du QR (canvas -> dataURL)
       const dataUrl = qrcodeContainer.querySelector("canvas")
         ? qrcodeContainer.querySelector("canvas").toDataURL("image/png")
         : qrcodeContainer.querySelector("img").src;
@@ -181,7 +166,6 @@
       const w = window.open("", "_blank");
       if (!w) { alert("Pop-up bloquée. Autorise l'ouverture de fenêtres."); return; }
 
-      // Page d'impression dédiée
       w.document.write(`
         <!DOCTYPE html>
         <html>
@@ -200,18 +184,13 @@
             }
             h1 {
               margin: 15mm 10mm 10mm 10mm;
-              font-size: 18pt; line-height: 1.2; text-align:center;
+              font-size: 28pt; /* titre plus gros */
+              font-weight: bold;
+              text-align:center;
               word-break: break-word;
             }
-            .qrwrap {
-              display:flex; align-items:center; justify-content:center;
-              flex:1; width:100%;
-            }
-            /* QR exactement 150 x 150 mm */
-            img.qr {
-              width:150mm; height:150mm; object-fit:contain;
-            }
-            /* Evite toute coupure de page */
+            .qrwrap { display:flex; align-items:center; justify-content:center; flex:1; width:100%; }
+            img.qr { width:150mm; height:150mm; object-fit:contain; }
             .page, h1, .qrwrap { break-inside: avoid; page-break-inside: avoid; }
           </style>
         </head>
@@ -229,12 +208,12 @@
       w.document.close();
     }
 
-    // Petit helper pour éviter des surprises avec < et & dans le titre
     function escapeHtml(s){
       return s.replace(/[&<>"']/g, c => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
       }[c]));
     }
   </script>
 </body>
 </html>
+
