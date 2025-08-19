@@ -1,216 +1,240 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Générateur de QR Code avec Logo</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f4f4f4;
-            background-image: url("./honeycomb.png");
-            background-repeat: repeat;
-            background-size: auto;
-        }
-        .container {
-            background: #fff;
-            padding: 20px 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        h1 { color: #333; }
-        input#inputText {
-            width: 80%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        input#logoFile { margin-bottom: 10px; }
-        .option-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-        .option-logo input { margin-right: 5px; }
-        button {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin: 5px;
-        }
-        button:hover { background-color: #0056b3; }
-        #qrcode-container {
-            margin-top: 20px;
-            padding: 10px;
-            border: 2px solid #eee;
-            display: inline-block;
-        }
-        #qrcode-canvas { display: block; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Générateur de QR Code avec Logo</title>
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:100vh;margin:0;background:#f4f4f4;
+      background-image:url("./honeycomb.png");background-repeat:repeat;background-size:auto;
+    }
+    .container{
+      background:#fff;padding:20px 40px;border-radius:8px;
+      box-shadow:0 4px 6px rgba(0,0,0,.1);text-align:center;max-width:900px;width:95%;
+    }
+    h1{color:#333;margin-top:0}
+    .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+    input#inputText, input#printTitle{
+      width:100%;max-width:640px;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;font-size:16px;
+    }
+    .maxnote{font-size:12px;color:#777;margin-top:-6px;margin-bottom:8px}
+    .option-logo{display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+    .option-logo input{margin-right:5px}
+    button{
+      background:#007BFF;color:#fff;border:none;padding:12px 20px;border-radius:4px;
+      font-size:16px;cursor:pointer;transition:background .3s;margin:5px
+    }
+    button:hover{background:#0056b3}
+    #qrcode-container{margin-top:20px;padding:10px;border:2px solid #eee;display:inline-block;background:#fff}
+    #qrcode-canvas{display:block}
+
+    /* --- Mise en page impression dédiée (dans la fenêtre d’impression) --- */
+    @media print {
+      /* rien ici, la page d’impression a ses propres styles injectés */
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Générateur de QR Code avec Logo</h1>
+  <div class="container">
+    <h1>Générateur de QR Code avec Logo</h1>
 
-        <input type="text" id="inputText" placeholder="Entrez votre texte ou URL ici">
+    <!-- Contenu du QR -->
+    <input type="text" id="inputText" placeholder="Entrez votre texte ou URL ici" />
+    <div class="option-logo">
+      <input type="checkbox" id="addLogo" />
+      <label for="addLogo">Ajouter un logo au centre</label>
+    </div>
+    <input type="file" id="logoFile" accept="image/*" />
 
-        <div class="option-logo">
-            <input type="checkbox" id="addLogo">
-            <label for="addLogo">Ajouter un logo au centre</label>
-        </div>
+    <!-- Titre pour l'impression -->
+    <div class="row" style="margin-top:10px">
+      <input type="text" id="printTitle" placeholder="Titre à imprimer au-dessus du QR (max 60 caractères)" maxlength="60" />
+    </div>
+    <div class="maxnote"><span id="titleCount">0</span>/60 caractères</div>
 
-        <input type="file" id="logoFile" accept="image/*">
-
-        <button onclick="generateQRCodeWithLogo()">Générer le QR Code</button>
-        <button onclick="printPage()">Imprimer</button>
-        <button onclick="downloadPDF()">Télécharger en PDF</button>
-        <button onclick="printWithTitle()">Imprimer avec Titre</button>
-
-        <div id="qrcode-container"></div>
+    <div class="row">
+      <button onclick="generateQRCodeWithLogo()">Générer le QR Code</button>
+      <button onclick="printPage()">Imprimer (page actuelle)</button>
+      <button onclick="downloadPDF()">Télécharger en PDF (zone QR)</button>
+      <button onclick="printWithTitle()">Imprimer avec Titre (A4, 15×15 cm)</button>
     </div>
 
-    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script>
-        function generateQRCodeWithLogo() {
-            const text = document.getElementById("inputText").value;
-            const addLogo = document.getElementById("addLogo").checked;
-            const logoFile = document.getElementById("logoFile").files?.[0];
-            const qrcodeContainer = document.getElementById("qrcode-container");
-            const qrSize = 256;
+    <div id="qrcode-container"></div>
+  </div>
 
-            if (text.trim() === "") {
-                alert("Veuillez entrer du texte ou une URL.");
-                return;
+  <!-- Librairies (comme avant) -->
+  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+  <script>
+    // Compteur de caractères
+    const printTitleEl = document.getElementById("printTitle");
+    const titleCountEl = document.getElementById("titleCount");
+    printTitleEl.addEventListener("input", () => {
+      titleCountEl.textContent = printTitleEl.value.length.toString();
+    });
+
+    function generateQRCodeWithLogo() {
+      const text = document.getElementById("inputText").value;
+      const addLogo = document.getElementById("addLogo").checked;
+      const logoFile = document.getElementById("logoFile").files?.[0];
+      const qrcodeContainer = document.getElementById("qrcode-container");
+      const qrSize = 256;
+
+      if (text.trim() === "") {
+        alert("Veuillez entrer du texte ou une URL.");
+        return;
+      }
+
+      qrcodeContainer.innerHTML = "";
+
+      // Canvas de travail
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = qrSize;
+      tempCanvas.height = qrSize;
+      const tempContext = tempCanvas.getContext("2d");
+
+      // Génère le QR dans un conteneur temporaire (lib qrcodejs génère <img>)
+      const qrDiv = document.createElement("div");
+      const qrcode = new QRCode(qrDiv, {
+        text,
+        width: qrSize,
+        height: qrSize,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      // On attend un tick pour que l'image soit dispo
+      setTimeout(() => {
+        const qrImg = qrDiv.querySelector("img");
+        if (qrImg) {
+          tempContext.drawImage(qrImg, 0, 0, qrSize, qrSize);
+
+          if (addLogo && logoFile) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const logoImg = new Image();
+              logoImg.onload = () => {
+                const logoSize = qrSize * 0.25;
+                const x = (qrSize - logoSize) / 2;
+                const y = (qrSize - logoSize) / 2;
+                tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
+
+                qrcodeContainer.appendChild(tempCanvas);
+              };
+              logoImg.src = event.target.result;
+            };
+            reader.readAsDataURL(logoFile);
+          } else {
+            qrcodeContainer.appendChild(tempCanvas);
+          }
+        }
+      }, 100);
+    }
+
+    function printPage() {
+      window.print();
+    }
+
+    function downloadPDF() {
+      const qrcodeContainer = document.getElementById("qrcode-container");
+      if (qrcodeContainer.innerHTML.trim() === "") {
+        alert("Veuillez d'abord générer un QR Code.");
+        return;
+      }
+      const node = qrcodeContainer.firstChild; // canvas
+      html2canvas(node).then(canvas => {
+        const imgData = canvas.toDataURL("image/png");
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        const imgWidth = 60; // mm
+        const imgHeight = canvas.height * imgWidth / canvas.width;
+        pdf.addImage(imgData, "PNG", 75, 20, imgWidth, imgHeight);
+        pdf.save("qrcode.pdf");
+      });
+    }
+
+    // Impression calibrée A4 avec un QR exactement 150mm x 150mm + titre
+    function printWithTitle() {
+      const qrcodeContainer = document.getElementById("qrcode-container");
+      if (qrcodeContainer.innerHTML.trim() === "") {
+        alert("Génère d'abord un QR Code 😉");
+        return;
+      }
+
+      const titre = (printTitleEl.value || "").trim();
+      if (!titre) {
+        alert("Renseigne le titre à imprimer (champ sous le QR).");
+        return;
+      }
+
+      // Récupère l'image du QR (canvas -> dataURL)
+      const dataUrl = qrcodeContainer.querySelector("canvas")
+        ? qrcodeContainer.querySelector("canvas").toDataURL("image/png")
+        : qrcodeContainer.querySelector("img").src;
+
+      const w = window.open("", "_blank");
+      if (!w) { alert("Pop-up bloquée. Autorise l'ouverture de fenêtres."); return; }
+
+      // Page d'impression dédiée
+      w.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8"/>
+          <title>Impression QR</title>
+          <style>
+            @page { size: A4; margin: 0; }
+            html, body { height: 100%; }
+            body { margin:0; font-family: Arial, sans-serif; }
+            .page {
+              width: 210mm; height: 297mm;
+              display:flex; flex-direction:column; align-items:center;
+              justify-content:flex-start; page-break-after:avoid;
+              padding: 0;
             }
-
-            qrcodeContainer.innerHTML = '';
-
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = qrSize;
-            tempCanvas.height = qrSize;
-            const tempContext = tempCanvas.getContext('2d');
-
-            const qrcode = new QRCode(qrcodeContainer, {
-                text: text,
-                width: qrSize,
-                height: qrSize,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
-            setTimeout(() => {
-                const qrImg = qrcodeContainer.querySelector('img');
-                if (qrImg) {
-                    tempContext.drawImage(qrImg, 0, 0, qrSize, qrSize);
-
-                    if (addLogo && logoFile) {
-                        const reader = new FileReader();
-                        reader.onload = function(event) {
-                            const logoImg = new Image();
-                            logoImg.onload = function() {
-                                const logoSize = qrSize * 0.25;
-                                const x = (qrSize - logoSize) / 2;
-                                const y = (qrSize - logoSize) / 2;
-                                tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
-
-                                qrcodeContainer.innerHTML = '';
-                                qrcodeContainer.appendChild(tempCanvas);
-                            };
-                            logoImg.src = event.target.result;
-                        };
-                        reader.readAsDataURL(logoFile);
-                    } else {
-                        qrcodeContainer.innerHTML = '';
-                        qrcodeContainer.appendChild(tempCanvas);
-                    }
-                }
-            }, 100);
-        }
-
-        function printPage() {
-            window.print();
-        }
-
-        function downloadPDF() {
-            const qrcodeContainer = document.getElementById("qrcode-container");
-            if (qrcodeContainer.innerHTML.trim() === "") {
-                alert("Veuillez d'abord générer un QR Code.");
-                return;
+            h1 {
+              margin: 15mm 10mm 10mm 10mm;
+              font-size: 18pt; line-height: 1.2; text-align:center;
+              word-break: break-word;
             }
-
-            html2canvas(qrcodeContainer.firstChild).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF();
-                const imgWidth = 60;
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                pdf.addImage(imgData, 'PNG', 75, 20, imgWidth, imgHeight);
-                pdf.save("qrcode.pdf");
-            });
-        }
-
-        // 👉 Nouvelle fonction pour imprimer avec un titre
-       function printWithTitle() {
-            const qrcodeContainer = document.getElementById("qrcode-container");
-            if (qrcodeContainer.innerHTML.trim() === "") {
-                alert("Veuillez d'abord générer un QR Code.");
-                return;
+            .qrwrap {
+              display:flex; align-items:center; justify-content:center;
+              flex:1; width:100%;
             }
-        
-            const titre = prompt("Texte à afficher au-dessus du QR :", "Mon QR Code");
-            if (titre === null) return;
-        
-            const dataUrl = qrcodeContainer.querySelector("canvas")
-                ? qrcodeContainer.querySelector("canvas").toDataURL("image/png")
-                : qrcodeContainer.querySelector("img").src;
-        
-            const w = window.open("", "_blank");
-            w.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <title>Impression QR</title>
-                    <style>
-                        @page { margin:0; }
-                        body { margin:0; font-family:sans-serif; text-align:center; }
-                        h1 { margin-top:20mm; font-size:28px; }
-                        .qr { display:flex; justify-content:center; align-items:center; margin-top:30mm; }
-                        img { width:150mm; height:150mm; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${titre}</h1>
-                    <div class="qr"><img src="${dataUrl}" /></div>
-                    <script>window.onload=()=>{setTimeout(()=>window.print(),200)};<\/script>
-                </body>
-                </html>
-            `);
-            w.document.close();
-        }
+            /* QR exactement 150 x 150 mm */
+            img.qr {
+              width:150mm; height:150mm; object-fit:contain;
+            }
+            /* Evite toute coupure de page */
+            .page, h1, .qrwrap { break-inside: avoid; page-break-inside: avoid; }
+          </style>
+        </head>
+        <body>
+          <div class="page">
+            <h1>${escapeHtml(titre)}</h1>
+            <div class="qrwrap">
+              <img class="qr" src="${dataUrl}" alt="QR Code"/>
+            </div>
+          </div>
+          <script>window.onload = () => { setTimeout(()=>window.print(), 150); }<\/script>
+        </body>
+        </html>
+      `);
+      w.document.close();
+    }
 
-    </script>
+    // Petit helper pour éviter des surprises avec < et & dans le titre
+    function escapeHtml(s){
+      return s.replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[c]));
+    }
+  </script>
 </body>
 </html>
-
-
-</html>
-
