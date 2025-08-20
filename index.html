@@ -21,8 +21,8 @@
       width:100%;max-width:640px;padding:10px;margin-bottom:10px;border:1px solid #ccc;border-radius:4px;font-size:16px;
     }
     .maxnote{font-size:12px;color:#777;margin-top:-6px;margin-bottom:8px}
-    .option-logo{display:flex;align-items:center;justify-content:center;margin-bottom:10px}
-    .option-logo input{margin-right:5px}
+    .option-logo-row{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+    .option-logo-row input[type="checkbox"]{margin-right:5px}
     button{
       background:#007BFF;color:#fff;border:none;padding:12px 20px;border-radius:4px;
       font-size:16px;cursor:pointer;transition:background .3s;margin:5px
@@ -37,11 +37,13 @@
     <h1>Générateur de QR Code avec Logo</h1>
 
     <input type="text" id="inputText" placeholder="Entrez votre texte ou URL ici" />
-    <div class="option-logo">
-      <input type="checkbox" id="addLogo" />
-      <label for="addLogo">Ajouter un logo au centre</label>
+    <div class="option-logo-row">
+      <div style="display:flex;align-items:center;">
+        <input type="checkbox" id="addLogo" />
+        <label for="addLogo">Ajouter un logo au centre</label>
+      </div>
+      <input type="file" id="logoFile" accept="image/*" />
     </div>
-    <input type="file" id="logoFile" accept="image/*" />
 
     <div class="row" style="margin-top:10px">
       <input type="text" id="printTitle" placeholder="Titre à imprimer au-dessus du QR (max 60 caractères)" maxlength="60" />
@@ -111,6 +113,9 @@
                 const logoSize = qrSize * 0.25;
                 const x = (qrSize - logoSize) / 2;
                 const y = (qrSize - logoSize) / 2;
+                // Réserver un carré blanc (masque) avant de dessiner le logo
+                tempContext.fillStyle = "#ffffff";
+                tempContext.fillRect(x - 5, y - 5, logoSize + 10, logoSize + 10);
                 tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
                 qrcodeContainer.appendChild(tempCanvas);
               };
@@ -183,7 +188,7 @@
               padding: 0;
             }
             h1 {
-              margin: 15mm 10mm 10mm 10mm;
+              margin: 10mm 10mm 5mm 10mm; /* ajustement marges haut/bas */
               font-size: 28pt; /* titre plus gros */
               font-weight: bold;
               text-align:center;
@@ -216,4 +221,3 @@
   </script>
 </body>
 </html>
-
