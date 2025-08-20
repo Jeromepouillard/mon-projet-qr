@@ -198,80 +198,80 @@
     printSubtitleEl.addEventListener("input", updatePreview);
 
     function generateQRCodeWithLogo() {
-      const text = document.getElementById("inputText").value;
-      const addLogo = document.getElementById("addLogo").checked;
-      const logoFile = document.getElementById("logoFile").files?.[0];
-      const qrcodeContainer = document.getElementById("qrcode-container");
-      const cssSize = 256;
+        const text = document.getElementById("inputText").value;
+        const addLogo = document.getElementById("addLogo").checked;
+        const logoFile = document.getElementById("logoFile").files?.[0];
+        const qrcodeContainer = document.getElementById("qrcode-container");
+        
+        // ✅ NOUVELLE TAILLE POUR UNE IMPRESSION DE HAUTE QUALITÉ
+        const highResSize = 1500;
+        const cssSize = 256;
 
-      if (text.trim() === "") {
-        alert("Veuillez entrer du texte ou une URL.");
-        return;
-      }
-
-      qrcodeContainer.innerHTML = "";
-
-      const tempCanvas = document.createElement("canvas");
-      
-      // ✅ Application du devicePixelRatio pour une meilleure résolution
-      const dpr = window.devicePixelRatio || 1;
-      tempCanvas.width = Math.floor(cssSize * dpr);
-      tempCanvas.height = Math.floor(cssSize * dpr);
-      tempCanvas.style.width = cssSize + 'px';
-      tempCanvas.style.height = cssSize + 'px';
-
-      const tempContext = tempCanvas.getContext("2d");
-      
-      // ✅ Application de la transformation pour simplifier le dessin
-      tempContext.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      const qrDiv = document.createElement("div");
-      const qrcode = new QRCode(qrDiv, {
-        text,
-        width: cssSize,
-        height: cssSize,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H,
-      });
-
-      setTimeout(() => {
-        const qrImg = qrDiv.querySelector("img");
-        if (qrImg) {
-            
-            // 1) ✅ Dessin du QR Code (sans lissage)
-            tempContext.imageSmoothingEnabled = false;
-            tempContext.drawImage(qrImg, 0, 0, cssSize, cssSize);
-
-            if (addLogo && logoFile) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const logoImg = new Image();
-                    logoImg.onload = () => {
-                        const logoSize = cssSize * 0.25;
-                        const x = (cssSize - logoSize) / 2;
-                        const y = (cssSize - logoSize) / 2;
-                        
-                        // 2) ✅ Dessin du logo (avec lissage)
-                        tempContext.save();
-                        tempContext.imageSmoothingEnabled = true;
-                        
-                        tempContext.fillStyle = "#ffffff";
-                        tempContext.fillRect(x - 5, y - 5, logoSize + 10, logoSize + 10);
-                        tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
-                        
-                        tempContext.restore();
-                        
-                        qrcodeContainer.appendChild(tempCanvas);
-                    };
-                    logoImg.src = event.target.result;
-                };
-                reader.readAsDataURL(logoFile);
-            } else {
-                qrcodeContainer.appendChild(tempCanvas);
-            }
+        if (text.trim() === "") {
+            alert("Veuillez entrer du texte ou une URL.");
+            return;
         }
-      }, 100);
+
+        qrcodeContainer.innerHTML = "";
+
+        const tempCanvas = document.createElement("canvas");
+        
+        // Utilisation de la taille haute résolution pour le rendu interne
+        tempCanvas.width = highResSize;
+        tempCanvas.height = highResSize;
+        
+        // Utilisation de la taille CSS pour l'affichage à l'écran
+        tempCanvas.style.width = cssSize + 'px';
+        tempCanvas.style.height = cssSize + 'px';
+
+        const tempContext = tempCanvas.getContext("2d");
+        
+        const qrDiv = document.createElement("div");
+        const qrcode = new QRCode(qrDiv, {
+            text,
+            width: highResSize, // Génération du QR à haute résolution
+            height: highResSize,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H,
+        });
+
+        setTimeout(() => {
+            const qrImg = qrDiv.querySelector("img");
+            if (qrImg) {
+                // Le lissage est désactivé par défaut, parfait pour le QR
+                tempContext.imageSmoothingEnabled = false;
+                tempContext.drawImage(qrImg, 0, 0, highResSize, highResSize);
+
+                if (addLogo && logoFile) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const logoImg = new Image();
+                        logoImg.onload = () => {
+                            const logoSize = highResSize * 0.25;
+                            const x = (highResSize - logoSize) / 2;
+                            const y = (highResSize - logoSize) / 2;
+                            
+                            // Dessin du logo (avec lissage)
+                            tempContext.save();
+                            tempContext.imageSmoothingEnabled = true;
+                            
+                            tempContext.fillStyle = "#ffffff";
+                            tempContext.fillRect(x - 5, y - 5, logoSize + 10, logoSize + 10);
+                            tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
+                            
+                            tempContext.restore();
+                            
+                            qrcodeContainer.appendChild(tempCanvas);
+                        };
+                        logoImg.src = event.target.result;
+                    };
+                    reader.readAsDataURL(logoFile);
+                } else {
+                    qrcodeContainer.appendChild(tempCanvas);
+                }
+            }
+        }, 100);
     }
 
     function printPage() {
@@ -311,6 +311,7 @@
         return;
       }
 
+      // ✅ Utilise le canvas haute résolution pour l'impression
       const dataUrl = qrcodeContainer.querySelector("canvas")
         ? qrcodeContainer.querySelector("canvas").toDataURL("image/png")
         : qrcodeContainer.querySelector("img").src;
@@ -389,6 +390,3 @@
   </script>
 </body>
 </html>
-
-
-
