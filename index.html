@@ -90,15 +90,16 @@
       display: block;
     }
 
-    /* 🎨 NOUVEAU STYLE POUR LA PRÉVISUALISATION DU TITRE */
+    /* 🎨 STYLE SYNCHRONISÉ POUR LA PRÉVISUALISATION DU TITRE */
     #printTitlePreview {
-      font-size: 32pt;
+      font-size: 48pt; /* Agrandit le texte en prévisualisation */
       font-weight: bold;
       text-align: center;
-      margin: 10px 0;
-      display: none; /* Cache la prévisualisation par défaut */
+      margin-top: 10mm;
+      margin-bottom: 10mm; /* Réduit l'espace en dessous du titre */
+      display: none;
       word-break: break-word;
-      padding: 0 10px;
+      line-height: 1.2;
     }
   </style>
 </head>
@@ -145,13 +146,12 @@
   <script>
     const printTitleEl = document.getElementById("printTitle");
     const titleCountEl = document.getElementById("titleCount");
-    const printTitlePreviewEl = document.getElementById("printTitlePreview"); // ✅ NOUVEAU : on récupère l'élément de prévisualisation
+    const printTitlePreviewEl = document.getElementById("printTitlePreview");
 
     printTitleEl.addEventListener("input", () => {
       const currentTitle = printTitleEl.value;
       titleCountEl.textContent = currentTitle.length.toString();
 
-      // ✅ NOUVEAU : on met à jour le texte et l'affichage de la prévisualisation
       printTitlePreviewEl.textContent = currentTitle;
       if (currentTitle.trim() === "") {
         printTitlePreviewEl.style.display = "none";
@@ -202,7 +202,6 @@
                 const logoSize = qrSize * 0.25;
                 const x = (qrSize - logoSize) / 2;
                 const y = (qrSize - logoSize) / 2;
-                // Réserver un carré blanc (masque) avant de dessiner le logo
                 tempContext.fillStyle = "#ffffff";
                 tempContext.fillRect(x - 5, y - 5, logoSize + 10, logoSize + 10);
                 tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
@@ -280,8 +279,8 @@
               padding: 0;
             }
             h1 {
-              margin: 10mm 10mm 5mm 10mm; /* ajustement marges haut/bas */
-              font-size: 28pt; /* titre plus gros */
+              margin: 10mm 10mm 10mm 10mm; /* ✅ NOUVEAU : Marge inférieure de 1cm */
+              font-size: 48pt; /* ✅ NOUVEAU : Agrandit le titre pour l'impression */
               font-weight: bold;
               text-align:center;
               word-break: break-word;
@@ -317,3 +316,6 @@
   </script>
 </body>
 </html>
+</body>
+</html>
+
