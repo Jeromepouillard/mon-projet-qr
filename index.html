@@ -39,7 +39,8 @@
       align-items: center;
     }
     input#inputText,
-    input#printTitle {
+    input#printTitle,
+    input#printSubtitle {
       width: 100%;
       max-width: 640px;
       padding: 10px;
@@ -90,16 +91,28 @@
       display: block;
     }
 
-    /* 🎨 STYLE SYNCHRONISÉ POUR LA PRÉVISUALISATION DU TITRE */
-    #printTitlePreview {
-      font-size: 48pt; /* Agrandit le texte en prévisualisation */
-      font-weight: bold;
+    /* 🎨 STYLE SYNCHRONISÉ POUR LES TITRES ET SOUS-TITRES */
+    #printTitlesContainer {
       text-align: center;
       margin-top: 10mm;
-      margin-bottom: 10mm; /* Réduit l'espace en dessous du titre */
-      display: none;
+      margin-bottom: 10mm;
+      display: none; /* Cache par défaut */
+    }
+
+    #printTitlePreview {
+      font-size: 48pt;
+      font-weight: bold;
+      margin: 0; /* Pas de marge pour coller au sous-titre */
       word-break: break-word;
       line-height: 1.2;
+    }
+    #printSubtitlePreview {
+      font-size: 24pt; /* Plus petit que le titre */
+      font-weight: normal;
+      margin: 5mm 0 0 0; /* Marge supérieure pour l'espace */
+      word-break: break-word;
+      line-height: 1.2;
+      color: #555;
     }
   </style>
 </head>
@@ -120,12 +133,24 @@
       <input
         type="text"
         id="printTitle"
-        placeholder="Titre à imprimer au-dessus du QR (max 60 caractères)"
+        placeholder="Titre principal à imprimer (max 60 caractères)"
         maxlength="60"
       />
     </div>
     <div class="maxnote">
       <span id="titleCount">0</span>/60 caractères
+    </div>
+    
+    <div class="row">
+      <input
+        type="text"
+        id="printSubtitle"
+        placeholder="Sous-titre à imprimer (max 60 caractères)"
+        maxlength="60"
+      />
+    </div>
+    <div class="maxnote">
+      <span id="subtitleCount">0</span>/60 caractères
     </div>
 
     <div class="row">
@@ -135,7 +160,10 @@
       <button onclick="printWithTitle()">Imprimer avec Titre (A4, 15×15 cm)</button>
     </div>
 
-    <div id="printTitlePreview"></div>
+    <div id="printTitlesContainer">
+      <div id="printTitlePreview"></div>
+      <div id="printSubtitlePreview"></div>
+    </div>
     <div id="qrcode-container"></div>
   </div>
 
@@ -145,20 +173,31 @@
 
   <script>
     const printTitleEl = document.getElementById("printTitle");
+    const printSubtitleEl = document.getElementById("printSubtitle");
     const titleCountEl = document.getElementById("titleCount");
+    const subtitleCountEl = document.getElementById("subtitleCount");
+    const printTitlesContainerEl = document.getElementById("printTitlesContainer");
     const printTitlePreviewEl = document.getElementById("printTitlePreview");
+    const printSubtitlePreviewEl = document.getElementById("printSubtitlePreview");
 
-    printTitleEl.addEventListener("input", () => {
-      const currentTitle = printTitleEl.value;
-      titleCountEl.textContent = currentTitle.length.toString();
+    function updatePreview() {
+      const mainTitle = printTitleEl.value;
+      const subTitle = printSubtitleEl.value;
+      titleCountEl.textContent = mainTitle.length.toString();
+      subtitleCountEl.textContent = subTitle.length.toString();
 
-      printTitlePreviewEl.textContent = currentTitle;
-      if (currentTitle.trim() === "") {
-        printTitlePreviewEl.style.display = "none";
+      printTitlePreviewEl.textContent = mainTitle;
+      printSubtitlePreviewEl.textContent = subTitle;
+
+      if (mainTitle.trim() === "" && subTitle.trim() === "") {
+        printTitlesContainerEl.style.display = "none";
       } else {
-        printTitlePreviewEl.style.display = "block";
+        printTitlesContainerEl.style.display = "block";
       }
-    });
+    }
+
+    printTitleEl.addEventListener("input", updatePreview);
+    printSubtitleEl.addEventListener("input", updatePreview);
 
     function generateQRCodeWithLogo() {
       const text = document.getElementById("inputText").value;
@@ -247,8 +286,10 @@
       }
 
       const titre = (printTitleEl.value || "").trim();
-      if (!titre) {
-        alert("Renseigne le titre à imprimer (champ sous le QR).");
+      const sousTitre = (printSubtitleEl.value || "").trim();
+
+      if (!titre && !sousTitre) {
+        alert("Renseigne au moins un titre ou un sous-titre à imprimer.");
         return;
       }
 
@@ -261,6 +302,9 @@
         alert("Pop-up bloquée. Autorise l'ouverture de fenêtres.");
         return;
       }
+
+      const titleHtml = titre ? `<h1>${escapeHtml(titre)}</h1>` : "";
+      const subtitleHtml = sousTitre ? `<h2>${escapeHtml(sousTitre)}</h2>` : "";
 
       w.document.write(`
         <!DOCTYPE html>
@@ -278,21 +322,32 @@
               justify-content:flex-start; page-break-after:avoid;
               padding: 0;
             }
+            .titles-container {
+              margin: 10mm 10mm 10mm 10mm;
+              text-align: center;
+            }
             h1 {
-              margin: 10mm 10mm 10mm 10mm; /* ✅ NOUVEAU : Marge inférieure de 1cm */
-              font-size: 48pt; /* ✅ NOUVEAU : Agrandit le titre pour l'impression */
+              font-size: 48pt;
               font-weight: bold;
-              text-align:center;
-              word-break: break-word;
+              margin: 0;
+            }
+            h2 {
+              font-size: 24pt;
+              font-weight: normal;
+              margin: 5mm 0 0 0;
+              color: #555;
             }
             .qrwrap { display:flex; align-items:center; justify-content:center; flex:1; width:100%; }
             img.qr { width:150mm; height:150mm; object-fit:contain; }
-            .page, h1, .qrwrap { break-inside: avoid; page-break-inside: avoid; }
+            .page, .titles-container, .qrwrap { break-inside: avoid; page-break-inside: avoid; }
           </style>
         </head>
         <body>
           <div class="page">
-            <h1>${escapeHtml(titre)}</h1>
+            <div class="titles-container">
+              ${titleHtml}
+              ${subtitleHtml}
+            </div>
             <div class="qrwrap">
               <img class="qr" src="${dataUrl}" alt="QR Code" />
             </div>
@@ -316,6 +371,5 @@
   </script>
 </body>
 </html>
-</body>
-</html>
+
 
