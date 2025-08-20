@@ -203,7 +203,6 @@
         const logoFile = document.getElementById("logoFile").files?.[0];
         const qrcodeContainer = document.getElementById("qrcode-container");
         
-        // ✅ NOUVELLE TAILLE POUR UNE IMPRESSION DE HAUTE QUALITÉ
         const highResSize = 1500;
         const cssSize = 256;
 
@@ -216,11 +215,9 @@
 
         const tempCanvas = document.createElement("canvas");
         
-        // Utilisation de la taille haute résolution pour le rendu interne
         tempCanvas.width = highResSize;
         tempCanvas.height = highResSize;
         
-        // Utilisation de la taille CSS pour l'affichage à l'écran
         tempCanvas.style.width = cssSize + 'px';
         tempCanvas.style.height = cssSize + 'px';
 
@@ -229,7 +226,7 @@
         const qrDiv = document.createElement("div");
         const qrcode = new QRCode(qrDiv, {
             text,
-            width: highResSize, // Génération du QR à haute résolution
+            width: highResSize,
             height: highResSize,
             colorDark: "#000000",
             colorLight: "#ffffff",
@@ -239,7 +236,6 @@
         setTimeout(() => {
             const qrImg = qrDiv.querySelector("img");
             if (qrImg) {
-                // Le lissage est désactivé par défaut, parfait pour le QR
                 tempContext.imageSmoothingEnabled = false;
                 tempContext.drawImage(qrImg, 0, 0, highResSize, highResSize);
 
@@ -252,7 +248,6 @@
                             const x = (highResSize - logoSize) / 2;
                             const y = (highResSize - logoSize) / 2;
                             
-                            // Dessin du logo (avec lissage)
                             tempContext.save();
                             tempContext.imageSmoothingEnabled = true;
                             
@@ -311,7 +306,6 @@
         return;
       }
 
-      // ✅ Utilise le canvas haute résolution pour l'impression
       const dataUrl = qrcodeContainer.querySelector("canvas")
         ? qrcodeContainer.querySelector("canvas").toDataURL("image/png")
         : qrcodeContainer.querySelector("img").src;
@@ -334,31 +328,41 @@
           <style>
             @page { size: A4; margin: 0; }
             html, body { height: 100%; }
-            body { margin:0; font-family: Arial, sans-serif; }
+            body { margin:0; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
             .page {
               width: 210mm; height: 297mm;
               display:flex; flex-direction:column; align-items:center;
               justify-content:flex-start; page-break-after:avoid;
-              padding: 0;
+              padding-top: 10mm;
             }
             .titles-container {
-              margin: 10mm 10mm 10mm 10mm;
               text-align: center;
+              margin-bottom: 5mm;
             }
             h1 {
               font-size: 48pt;
               font-weight: bold;
-              margin: 0;
+              margin-bottom: 0;
             }
             h2 {
               font-size: 48pt;
               font-weight: normal;
-              margin: 5mm 0 0 0;
+              margin-top: 2mm;
+              margin-bottom: 0;
               color: #555;
             }
-            .qrwrap { display:flex; align-items:center; justify-content:center; flex:1; width:100%; }
+            .qrwrap {
+              display:flex; align-items:center; justify-content:center; flex:1; width:100%;
+              margin-top: -40mm; /* ✅ Remonte le QR code de 4cm */
+            }
             img.qr { width:150mm; height:150mm; object-fit:contain; }
-            .page, .titles-container, .qrwrap { break-inside: avoid; page-break-inside: avoid; }
+            .empty-rectangle {
+              width: 150mm; /* Même largeur que le QR code */
+              height: 40mm; /* Hauteur de 4cm */
+              /* border: 1px solid #ccc; */
+              margin-top: 5mm;
+            }
+            .page, .titles-container, .qrwrap, .empty-rectangle { break-inside: avoid; page-break-inside: avoid; }
           </style>
         </head>
         <body>
@@ -370,6 +374,7 @@
             <div class="qrwrap">
               <img class="qr" src="${dataUrl}" alt="QR Code" />
             </div>
+            <div class="empty-rectangle"></div>
           </div>
           <script>window.onload = () => { setTimeout(()=>window.print(), 150); }<\/script>
         </body>
