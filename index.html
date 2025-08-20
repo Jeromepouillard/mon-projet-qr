@@ -91,25 +91,23 @@
       display: block;
     }
 
-    /* 🎨 STYLE SYNCHRONISÉ POUR LES TITRES ET SOUS-TITRES */
     #printTitlesContainer {
       text-align: center;
       margin-top: 10mm;
       margin-bottom: 10mm;
-      display: none; /* Cache par défaut */
+      display: none;
     }
-
     #printTitlePreview {
       font-size: 48pt;
       font-weight: bold;
-      margin: 0; /* Pas de marge pour coller au sous-titre */
+      margin: 0;
       word-break: break-word;
       line-height: 1.2;
     }
     #printSubtitlePreview {
-      font-size: 24pt; /* Plus petit que le titre */
+      font-size: 24pt;
       font-weight: normal;
-      margin: 5mm 0 0 0; /* Marge supérieure pour l'espace */
+      margin: 5mm 0 0 0;
       word-break: break-word;
       line-height: 1.2;
       color: #555;
@@ -204,7 +202,7 @@
       const addLogo = document.getElementById("addLogo").checked;
       const logoFile = document.getElementById("logoFile").files?.[0];
       const qrcodeContainer = document.getElementById("qrcode-container");
-      const qrSize = 256;
+      const cssSize = 256;
 
       if (text.trim() === "") {
         alert("Veuillez entrer du texte ou une URL.");
@@ -214,15 +212,24 @@
       qrcodeContainer.innerHTML = "";
 
       const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = qrSize;
-      tempCanvas.height = qrSize;
+      
+      // ✅ Application du devicePixelRatio pour une meilleure résolution
+      const dpr = window.devicePixelRatio || 1;
+      tempCanvas.width = Math.floor(cssSize * dpr);
+      tempCanvas.height = Math.floor(cssSize * dpr);
+      tempCanvas.style.width = cssSize + 'px';
+      tempCanvas.style.height = cssSize + 'px';
+
       const tempContext = tempCanvas.getContext("2d");
+      
+      // ✅ Application de la transformation pour simplifier le dessin
+      tempContext.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const qrDiv = document.createElement("div");
       const qrcode = new QRCode(qrDiv, {
         text,
-        width: qrSize,
-        height: qrSize,
+        width: cssSize,
+        height: cssSize,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H,
@@ -231,27 +238,38 @@
       setTimeout(() => {
         const qrImg = qrDiv.querySelector("img");
         if (qrImg) {
-          tempContext.drawImage(qrImg, 0, 0, qrSize, qrSize);
+            
+            // 1) ✅ Dessin du QR Code (sans lissage)
+            tempContext.imageSmoothingEnabled = false;
+            tempContext.drawImage(qrImg, 0, 0, cssSize, cssSize);
 
-          if (addLogo && logoFile) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              const logoImg = new Image();
-              logoImg.onload = () => {
-                const logoSize = qrSize * 0.25;
-                const x = (qrSize - logoSize) / 2;
-                const y = (qrSize - logoSize) / 2;
-                tempContext.fillStyle = "#ffffff";
-                tempContext.fillRect(x - 5, y - 5, logoSize + 10, logoSize + 10);
-                tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
+            if (addLogo && logoFile) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const logoImg = new Image();
+                    logoImg.onload = () => {
+                        const logoSize = cssSize * 0.25;
+                        const x = (cssSize - logoSize) / 2;
+                        const y = (cssSize - logoSize) / 2;
+                        
+                        // 2) ✅ Dessin du logo (avec lissage)
+                        tempContext.save();
+                        tempContext.imageSmoothingEnabled = true;
+                        
+                        tempContext.fillStyle = "#ffffff";
+                        tempContext.fillRect(x - 5, y - 5, logoSize + 10, logoSize + 10);
+                        tempContext.drawImage(logoImg, x, y, logoSize, logoSize);
+                        
+                        tempContext.restore();
+                        
+                        qrcodeContainer.appendChild(tempCanvas);
+                    };
+                    logoImg.src = event.target.result;
+                };
+                reader.readAsDataURL(logoFile);
+            } else {
                 qrcodeContainer.appendChild(tempCanvas);
-              };
-              logoImg.src = event.target.result;
-            };
-            reader.readAsDataURL(logoFile);
-          } else {
-            qrcodeContainer.appendChild(tempCanvas);
-          }
+            }
         }
       }, 100);
     }
@@ -371,5 +389,6 @@
   </script>
 </body>
 </html>
+
 
 
