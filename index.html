@@ -330,40 +330,54 @@
             @page { size: A4; margin: 0; }
             html, body { height: 100%; }
             body { margin:0; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
+      
             .page {
               width: 210mm; height: 297mm;
               display:flex; flex-direction:column; align-items:center;
-              justify-content:flex-start; page-break-after:avoid;
-              padding-top: 10mm;
+              justify-content:flex-start; 
+              page-break-after:avoid;
+              padding-top: 0mm; /* 🔼 Remontée de 2 cm */
             }
+      
             .titles-container {
               text-align: center;
               margin-bottom: 5mm;
             }
+      
             h1 {
               font-size: 48pt;
               font-weight: bold;
               margin-bottom: 0;
             }
+      
             h2 {
               font-size: 48pt;
               font-weight: normal;
               margin-top: 2mm;
               margin-bottom: 0;
-              color: #555;
+              color: #cc0000 !important; /* 🔥 Sous-titre en rouge */
             }
+      
             .qrwrap {
               display:flex; align-items:center; justify-content:center; flex:1; width:100%;
-              margin-top: -20mm; /* ✅ Remonte le QR code de 4cm */
-            }
-            img.qr { width:150mm; height:150mm; object-fit:contain; }
-            .empty-rectangle {
-              width: 150mm; /* Même largeur que le QR code */
-              height: 40mm; /* Hauteur de 4cm */
-              border: 1px solid #ccc; 
               margin-top: -20mm;
             }
-            .page, .titles-container, .qrwrap, .empty-rectangle { break-inside: avoid; page-break-inside: avoid; }
+      
+            img.qr {
+              width:150mm; height:150mm; object-fit:contain;
+            }
+      
+            .empty-rectangle {
+              width: 150mm;
+              height: 60mm; /* 🔼 Plus grand qu’avant : 40mm → 60mm */
+              border: 1px solid #ccc; 
+              margin-top: -10mm;
+            }
+      
+            .page, .titles-container, .qrwrap, .empty-rectangle { 
+              break-inside: avoid; 
+              page-break-inside: avoid; 
+            }
           </style>
         </head>
         <body>
@@ -372,15 +386,21 @@
               ${titleHtml}
               ${subtitleHtml}
             </div>
+      
             <div class="qrwrap">
               <img class="qr" src="${dataUrl}" alt="QR Code" />
             </div>
+      
             <div class="empty-rectangle"></div>
           </div>
-          <script>window.onload = () => { setTimeout(()=>window.print(), 150); }<\/script>
+      
+          <script>
+            window.onload = () => { setTimeout(()=>window.print(), 150); }
+          <\/script>
         </body>
         </html>
       `);
+
       w.document.close();
     }
 
@@ -396,6 +416,7 @@
   </script>
 </body>
 </html>
+
 
 
 
